@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
 import { Search, Sun, Moon, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { fetchCitySuggestions } from "../utils/weatherApi.js";
 
 const Navbar = ({ onSearch }) => {
   const [query, setQuery] = useState("");
   const [dark, setDark] = useState(false);
   const [openSearch, setOpenSearch] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
 
   const handleSearch = (e) => {
     e.preventDefault();
@@ -19,6 +21,19 @@ const Navbar = ({ onSearch }) => {
     document.documentElement.classList.toggle("dark", dark);
   }, [dark]);
 
+  // for city suggestions
+  useEffect(() => {
+    const delay = setTimeout(async () => {
+      if (query.length > 2) {
+        const results = await fetchCitySuggestions(query);
+        setSuggestions(results);
+      } else {
+        setSuggestions([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [query]);
   return (
     <>
       <motion.nav
@@ -29,10 +44,10 @@ const Navbar = ({ onSearch }) => {
       >
         <div className="flex items-center justify-between gap-4">
           <div className="shrink-0">
-            <h1 className="text-xl sm:text-2xl font-bold text-yellow-400 hidden sm:block">
+            <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-yellow-400 hidden sm:block">
               WeatherForecast
             </h1>
-            <h1 className="text-2xl font-bold text-white dark:text-yellow-400 sm:hidden">
+            <h1 className="text-2xl font-bold text-slate-800 dark:text-yellow-400 sm:hidden">
               WF
             </h1>
           </div>
@@ -62,11 +77,12 @@ const Navbar = ({ onSearch }) => {
             {dark ? (
               <Sun className="text-yellow-400" size={20} />
             ) : (
-              <Moon className="text-yellow-400" size={20} />
+              <Moon className="text-slate-800" size={20} />
             )}
           </button>
         </div>
       </motion.nav>
+      {/* // search modal */}
       {openSearch && (
         <div className="fixed inset-0 bg-black/50 z-10">
           <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50 bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-xl w-[90%] max-w-md">
@@ -90,11 +106,30 @@ const Navbar = ({ onSearch }) => {
               />
               <button
                 type="submit"
-                className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600 transition duration-300 cursor-pointer"
+                className="bg-slate-500 hover:bg-slate-600 dark:bg-yellow-500 text-white px-4 py-2 rounded dark:hover:bg-yellow-600 transition duration-300 cursor-pointer"
               >
                 Search
               </button>
             </form>
+            {suggestions.length > 0 && (
+              <div className="mt-2 bg-white dark:bg-slate-800 rounded-lg shadow-md max-h-48 overflow-y-auto">
+                {suggestions.map((city, index) => (
+                  <div
+                    key={index}
+                    onClick={() => {
+                      onSearch(city.name);
+                      setOpenSearch(false);
+                      setQuery("");
+                      setSuggestions([]);
+                    }}
+                    className="px-4 py-2 cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-800 dark:text-white"
+                  >
+                    {city.name}, {city.state ? city.state + "," : ""}{" "}
+                    {city.country}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
