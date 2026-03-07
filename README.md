@@ -6,7 +6,7 @@ The app allows users to search for any city and view the **current weather condi
 ---
 
 ## 🚀 Live Demo
-
+https://weatherft.netlify.app/
 ---
 
 # 📌 Features
